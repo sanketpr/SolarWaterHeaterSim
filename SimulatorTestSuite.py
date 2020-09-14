@@ -1,5 +1,5 @@
 from unittest import TestCase, TestLoader
-from SolarSimulation import Tank, SolarPanel, PumpingSystem
+from SolarSimulation import Tank, SolarHeater, PumpingSystem
 import unittest
 
 class TankTest(TestCase):
@@ -35,21 +35,21 @@ class TankTest(TestCase):
 
 
 class SolarPanelTest(TestCase):
-	panel = SolarPanel()
+
+	heater = SolarHeater(numberOfPanels=2)
 
 	def setUp(self):
-		self.panel = SolarPanel(height = 1, width = 1)
-		self.panel.setIncidentEnergy(300)
+		self.heater.setIncidentEnergy(300)
 
 	def test_waterHeatingPerCycle(self):
 		pumpedWaterVolume = 2
-		pumpedWaterTemperature = 24
-		expectedRaisedWaterTemp = 24.02
+		pumpedWaterTemperature = 15
+		expectedRaisedWaterTemp = 15.01
 
-		raisedWaterTemp = self.panel.heatWater(pumpedWaterVolume, pumpedWaterTemperature)
+		raisedWaterTemp = self.heater.heatWater(pumpedWaterVolume, pumpedWaterTemperature)
 
 		error_msg = "Expected raised water temperature doesn't match the actual obtained temperature"
-		self.assertTrue( abs(expectedRaisedWaterTemp - raisedWaterTemp) <= 0.01, error_msg)
+		self.assertTrue(abs(expectedRaisedWaterTemp-raisedWaterTemp) <=0.01, error_msg)
 		
 
 def main():
