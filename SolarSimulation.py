@@ -26,10 +26,19 @@ class Panel:
 	def heatEnergy(energy: float, mass: float, specificHeat: float, temprature) -> float:
 		return (energy/(mass * specificHeat)) + temprature
 
+	def setSpec(self, height: int = None, width: int = None, efficiency: float = None):
+		if(height != None):
+			self.height = height
+		if(width != None):
+			self.width = width
+		if(efficiency != None):
+			self.efficiency = efficiency
+
+
 class SolarHeater:
 
-	MAX_HEAT = 60
-	panels = []			# List of Solar Panel
+	MAX_HEAT = 95
+	__panels = []			# List of Solar Panel
 
 	"""
 		args:
@@ -40,19 +49,18 @@ class SolarHeater:
 		self.buildSolarPanels(numberOfPanels, customSpec)
 		self.incidentEnergy = -1
 
-	def changePanelAt(index: int, height: int, width: int, efficiency: float):
-		if(index >= len(self.panels)):
-			return
-		self.panels[index] = Panel(height=height, width=width, efficiency=efficiency)
-
 	def buildSolarPanels(self, number, customSpec: tuple()) -> [Panel]:
 		if(len(customSpec) != 0 and len(customSpec) != 3): 
 			raise ValueError
 
 		h, w, e = customSpec if (len(customSpec) == 3) else (1,1,0.18) 
 		for _ in range(number):
-			self.panels.append(Panel(height=h, width=w, efficiency=e))
+			self.__panels.append(Panel(height=h, width=w, efficiency=e))
 
+	def changePanelAt(index: int, height: int = None, width: int = None, efficiency: float = None):
+		if(index >= len(self.panels)):
+			return
+		self.__panels[index].setSpec(height=height, width=width, efficiency=efficiency)
 
 	def getIncidentEnergy() -> int:
 		if(self.incidentEnergy == 0):
@@ -67,12 +75,12 @@ class SolarHeater:
 	def heatWater(self, volume: int, initialTemp: float) -> float:
 		if(initialTemp >= self.MAX_HEAT): return self.MAX_HEAT		# Restricting heating over the max temp
 
-		numberOfPanels = len(self.panels)
+		numberOfPanels = len(self.__panels)
 		volumePerPanel = volume/numberOfPanels
 		massPerPanel = volumePerPanel * Water.Density
 
 		tempObtainedFromPanels = []
-		for panel in self.panels:
+		for panel in self.__panels:
 			tempObtainedFromPanels.append(panel.tempObtainedFrom(self.incidentEnergy, massPerPanel, initialTemp) * massPerPanel)
 
 		# Weighted avegare of water tempratures obtained from all panels
@@ -100,9 +108,9 @@ class Tank:
 	def addWater(self, volume: int, temprature: int):
 		if(volume > self.capacity - self.waterVol):
 			print("Cannot add more water than the overall tank capacity")
-		self.mixWater(volume, temprature)
+		self.__mixWater(volume, temprature)
 
-	def mixWater(self,volume, temprature):
+	def __mixWater(self,volume, temprature):
 		self.waterTemp = ((volume*temprature)+(self.waterTemp*self.waterVol))/(volume+self.waterVol)
 		self.waterVol += volume
 
@@ -122,7 +130,7 @@ class PumpingSystem:
 	def setPumpingRateLitersPerSec(self, rate):
 		self.pumpingRate = rate
 
-	def feedWaterToPanel(self) -> int:
+	def feedWaterToSolarHeater(self) -> int:
 		return self.panel.heatWater(self.pumpingRate, self.tank.waterTemp)	# Water out from the panel after heating
 
 	def drawWaterFromTank(self):
@@ -154,7 +162,7 @@ class Controller:
 
 	def __performOneCycle(self):
 		self.pump.drawWaterFromTank()
-		newWaterTemp = self.pump.feedWaterToPanel()
+		newWaterTemp = self.pump.feedWaterToSolarHeater()
 		self.pump.feedWaterToTank(newWaterTemp)
 
 	def simulateSystemForSeconds(self, second: int):
